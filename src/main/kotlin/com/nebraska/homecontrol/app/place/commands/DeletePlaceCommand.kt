@@ -14,12 +14,11 @@ class DeletePlaceCommand(
     override fun invoke(args: Long): Result<Unit> {
         val placeResult = getPlaceById(args)
 
-        placeResult.onFailure { return Result.failure(placeResult.exceptionOrNull()!!) }
-
-        val place = placeResult.getOrThrow()
-
-        val deletedRooms = deleteAllRooms(place.room)
-
-        return Result.success(Unit)
+        return placeResult.mapCatching { place ->
+            val deletedRooms = deleteAllRooms(place.room)
+            deletedRooms.getOrThrow()
+        }.mapCatching {
+            repository.deleteById(args)
+        }
     }
 }
